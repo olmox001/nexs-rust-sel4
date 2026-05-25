@@ -703,12 +703,14 @@ impl<'a> Initializer<'a> {
         let target_affinity = if affinity < active_cpus {
             affinity
         } else {
+            let redirected = affinity % active_cpus;
             warn!(
-                "Warning: CPU affinity {} is not available (active CPUs: {}). Falling back to CPU 0.",
+                "Warning: CPU affinity {} is not available (active CPUs: {}). Redirecting modulo to CPU {}.",
                 affinity,
-                active_cpus
+                active_cpus,
+                redirected
             );
-            0
+            redirected
         };
         self.bootinfo
             .sched_control()
