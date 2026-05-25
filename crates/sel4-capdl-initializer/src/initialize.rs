@@ -699,7 +699,7 @@ impl<'a> Initializer<'a> {
     fn init_sched_context(&self, obj_id: ArchivedObjectId, affinity: usize) -> Result<()> {
         let obj = self.object_as::<object::ArchivedSchedContext>(obj_id);
         let sched_context = self.orig_cap::<cap_type::SchedContext>(obj_id);
-        let active_cpus = self.bootinfo.sched_control().len();
+        let active_cpus = usize::try_from(self.bootinfo.inner().numNodes).unwrap();
         let target_affinity = if affinity < active_cpus {
             affinity
         } else {
