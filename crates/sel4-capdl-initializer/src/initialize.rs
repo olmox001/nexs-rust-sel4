@@ -14,7 +14,7 @@ use rkyv::ops::ArchivedRange;
 use rkyv::option::ArchivedOption;
 
 #[allow(unused_imports)]
-use log::{debug, error, info, trace};
+use log::{debug, error, info, trace, warn};
 
 use sel4::{
     CapRights, CapTypeForFrameObjectOfFixedSize, cap_type,
@@ -699,9 +699,20 @@ impl<'a> Initializer<'a> {
     fn init_sched_context(&self, obj_id: ArchivedObjectId, affinity: usize) -> Result<()> {
         let obj = self.object_as::<object::ArchivedSchedContext>(obj_id);
         let sched_context = self.orig_cap::<cap_type::SchedContext>(obj_id);
+        let active_cpus = self.bootinfo.sched_control().len();
+        let target_affinity = if affinity < active_cpus {
+            affinity
+        } else {
+            warn!(
+                "Warning: CPU affinity {} is not available (active CPUs: {}). Falling back to CPU 0.",
+                affinity,
+                active_cpus
+            );
+            0
+        };
         self.bootinfo
             .sched_control()
-            .index(affinity)
+            .index(target_affinity)
             .cap()
             .sched_control_configure_flags(
                 sched_context,
